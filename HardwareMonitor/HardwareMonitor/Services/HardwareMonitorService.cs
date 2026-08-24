@@ -1,5 +1,6 @@
 using System.IO;
 using System.Management;
+using System.Runtime.InteropServices;
 using LibreHardwareMonitor.Hardware;
 
 namespace HardwareMonitor.Services;
@@ -33,7 +34,6 @@ public sealed class HardwareMonitorService : IDisposable
         {
             IsCpuEnabled = true,
             IsGpuEnabled = true,
-            IsMemoryEnabled = true,
         };
         _computer.Open();
     }
@@ -63,15 +63,19 @@ public sealed class HardwareMonitorService : IDisposable
 
     private void UpdateMemory()
     {
-        IHardware? memory = _computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Memory);
-
-        float? used = memory?.Sensors.FirstOrDefault(
-            s => s.SensorType == SensorType.Data && s.Name == "Memory Used")?.Value;
-        float? available = memory?.Sensors.FirstOrDefault(
-            s => s.SensorType == SensorType.Data && s.Name == "Memory Available")?.Value;
-
-        RamUsedGb = used;
-        RamTotalGb = used.HasValue && available.HasValue ? used + available : null;
+        // LibreHardwareMonitor's Memory sensors report commit charge (RAM +
+        // page file), not physical RAM, so read physical RAM directly instead.
+        var status = new MEMORYSTATUSEX { dwLength = (uint)Marshal.SizeOf<MEMORYSTATUSEX>() };
+        if (GlobalMemoryStatusEx(ref status))
+        {
+            RamTotalGb = status.ullTotalPhys / 1024f / 1024f / 1024f;
+            RamUsedGb = (status.ullTotalPhys - status.ullAvailPhys) / 1024f / 1024f / 1024f;
+        }
+        else
+        {
+            RamTotalGb = null;
+            RamUsedGb = null;
+        }
     }
 
     private void UpdateVram()
@@ -170,4 +174,22 @@ public sealed class HardwareMonitorService : IDisposable
     }
 
     public void Dispose() => _computer.Close();
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+    private struct MEMORYSTATUSEX
+    {
+        public uint dwLength;
+        public uint dwMemoryLoad;
+        public ulong ullTotalPhys;
+        public ulong ullAvailPhys;
+        public ulong ullTotalPageFile;
+        public ulong ullAvailPageFile;
+        public ulong ullTotalVirtual;
+        public ulong ullAvailVirtual;
+        public ulong ullAvailExtendedVirtual;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GlobalMemoryStatusEx(ref MEMORYSTATUSEX lpBuffer);
 }
