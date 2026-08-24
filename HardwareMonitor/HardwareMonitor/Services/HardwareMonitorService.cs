@@ -1,11 +1,12 @@
+using System.IO;
 using System.Management;
 using LibreHardwareMonitor.Hardware;
 
 namespace HardwareMonitor.Services;
 
 /// <summary>
-/// Thin wrapper around LibreHardwareMonitorLib exposing just the CPU and GPU
-/// temperature readings this app needs.
+/// Thin wrapper around LibreHardwareMonitorLib exposing CPU/GPU temperature,
+/// RAM/VRAM usage, and system-drive free space.
 /// </summary>
 public sealed class HardwareMonitorService : IDisposable
 {
@@ -19,6 +20,12 @@ public sealed class HardwareMonitorService : IDisposable
 
     public float? CpuTemperature { get; private set; }
     public float? GpuTemperature { get; private set; }
+    public float? RamUsedGb { get; private set; }
+    public float? RamTotalGb { get; private set; }
+    public float? VramUsedGb { get; private set; }
+    public float? VramTotalGb { get; private set; }
+    public double? DiskFreeGb { get; private set; }
+    public double? DiskTotalGb { get; private set; }
 
     public HardwareMonitorService()
     {
@@ -26,6 +33,7 @@ public sealed class HardwareMonitorService : IDisposable
         {
             IsCpuEnabled = true,
             IsGpuEnabled = true,
+            IsMemoryEnabled = true,
         };
         _computer.Open();
     }
@@ -47,6 +55,69 @@ public sealed class HardwareMonitorService : IDisposable
             GpuHardwareTypes,
             s => s.Name.Contains("Core", StringComparison.OrdinalIgnoreCase)
                  || s.Name.Contains("Hot Spot", StringComparison.OrdinalIgnoreCase));
+
+        UpdateMemory();
+        UpdateVram();
+        UpdateDisk();
+    }
+
+    private void UpdateMemory()
+    {
+        IHardware? memory = _computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Memory);
+
+        float? used = memory?.Sensors.FirstOrDefault(
+            s => s.SensorType == SensorType.Data && s.Name == "Memory Used")?.Value;
+        float? available = memory?.Sensors.FirstOrDefault(
+            s => s.SensorType == SensorType.Data && s.Name == "Memory Available")?.Value;
+
+        RamUsedGb = used;
+        RamTotalGb = used.HasValue && available.HasValue ? used + available : null;
+    }
+
+    private void UpdateVram()
+    {
+        foreach (HardwareType type in GpuHardwareTypes)
+        {
+            IHardware? gpu = _computer.Hardware.FirstOrDefault(h => h.HardwareType == type);
+            if (gpu == null)
+                continue;
+
+            float? usedMb = gpu.Sensors.FirstOrDefault(
+                s => s.SensorType == SensorType.SmallData && s.Name == "GPU Memory Used")?.Value;
+            float? totalMb = gpu.Sensors.FirstOrDefault(
+                s => s.SensorType == SensorType.SmallData && s.Name == "GPU Memory Total")?.Value;
+
+            if (usedMb.HasValue && totalMb.HasValue)
+            {
+                VramUsedGb = usedMb.Value / 1024f;
+                VramTotalGb = totalMb.Value / 1024f;
+                return;
+            }
+        }
+
+        VramUsedGb = null;
+        VramTotalGb = null;
+    }
+
+    private void UpdateDisk()
+    {
+        try
+        {
+            var drive = new DriveInfo(Path.GetPathRoot(Environment.SystemDirectory) ?? "C:\\");
+            if (drive.IsReady)
+            {
+                DiskFreeGb = drive.AvailableFreeSpace / 1024d / 1024d / 1024d;
+                DiskTotalGb = drive.TotalSize / 1024d / 1024d / 1024d;
+                return;
+            }
+        }
+        catch (IOException)
+        {
+            // Drive not accessible right now; report unknown below.
+        }
+
+        DiskFreeGb = null;
+        DiskTotalGb = null;
     }
 
     private float? FindTemperature(IEnumerable<HardwareType> hardwareTypes, Func<ISensor, bool> preferred)

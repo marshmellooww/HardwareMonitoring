@@ -36,8 +36,11 @@ public partial class MainWindow : Window
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        PositionWindow();
+        // Populate real readings before anchoring, so the window is sized
+        // and positioned for its actual content rather than the "--" placeholders.
         UpdateReadings();
+        UpdateLayout();
+        PositionWindow();
     }
 
     private void PositionWindow()
@@ -52,6 +55,9 @@ public partial class MainWindow : Window
         _hardwareMonitor.Refresh();
         SetTemperature(CpuTempText, _hardwareMonitor.CpuTemperature);
         SetTemperature(GpuTempText, _hardwareMonitor.GpuTemperature);
+        SetUsage(RamText, _hardwareMonitor.RamUsedGb, _hardwareMonitor.RamTotalGb, "GB");
+        SetUsage(VramText, _hardwareMonitor.VramUsedGb, _hardwareMonitor.VramTotalGb, "GB");
+        SetDisk(DiskText, _hardwareMonitor.DiskFreeGb, _hardwareMonitor.DiskTotalGb, "GB");
     }
 
     private static void SetTemperature(TextBlock block, float? value)
@@ -68,6 +74,44 @@ public partial class MainWindow : Window
         {
             <= 60 => NormalBrush,
             <= 80 => WarmBrush,
+            _ => HotBrush,
+        };
+    }
+
+    private static void SetUsage(TextBlock block, float? used, float? total, string unit)
+    {
+        if (!used.HasValue || !total.HasValue || total.Value <= 0)
+        {
+            block.Text = "N/A";
+            block.Foreground = UnknownBrush;
+            return;
+        }
+
+        block.Text = $"{used.Value:0.#}/{total.Value:0.#} {unit}";
+        double ratio = used.Value / total.Value;
+        block.Foreground = ratio switch
+        {
+            <= 0.6 => NormalBrush,
+            <= 0.85 => WarmBrush,
+            _ => HotBrush,
+        };
+    }
+
+    private static void SetDisk(TextBlock block, double? free, double? total, string unit)
+    {
+        if (!free.HasValue || !total.HasValue || total.Value <= 0)
+        {
+            block.Text = "N/A";
+            block.Foreground = UnknownBrush;
+            return;
+        }
+
+        block.Text = $"{free.Value:0}/{total.Value:0} {unit}";
+        double freeRatio = free.Value / total.Value;
+        block.Foreground = freeRatio switch
+        {
+            >= 0.2 => NormalBrush,
+            >= 0.1 => WarmBrush,
             _ => HotBrush,
         };
     }

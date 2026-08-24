@@ -16,6 +16,24 @@
         WindowStartupLocation="Manual"
         Loaded="Window_Loaded"
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
+    <Window.Resources>
+        <Style x:Key="LabelText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#AAAAAA" />
+            <Setter Property="FontFamily" Value="Segoe UI" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,10,4" />
+        </Style>
+        <Style x:Key="ValueText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontFamily" Value="Segoe UI" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </Window.Resources>
     <Border Background="#CC1A1A1A"
             BorderBrush="#33FFFFFF"
             BorderThickness="1"
@@ -26,49 +44,33 @@
                 <MenuItem Header="Exit" Click="ExitMenuItem_Click" />
             </ContextMenu>
         </Border.ContextMenu>
-        <StackPanel>
-            <Grid Margin="0,0,0,6">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="52" />
-                </Grid.ColumnDefinitions>
-                <TextBlock Text="CPU"
-                           Foreground="#AAAAAA"
-                           FontFamily="Segoe UI"
-                           FontSize="12"
-                           FontWeight="SemiBold"
-                           VerticalAlignment="Center" />
-                <TextBlock x:Name="CpuTempText"
-                           Grid.Column="1"
-                           Text="--°C"
-                           Foreground="White"
-                           FontFamily="Segoe UI"
-                           FontSize="16"
-                           FontWeight="Bold"
-                           HorizontalAlignment="Right"
-                           VerticalAlignment="Center" />
-            </Grid>
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="52" />
-                </Grid.ColumnDefinitions>
-                <TextBlock Text="GPU"
-                           Foreground="#AAAAAA"
-                           FontFamily="Segoe UI"
-                           FontSize="12"
-                           FontWeight="SemiBold"
-                           VerticalAlignment="Center" />
-                <TextBlock x:Name="GpuTempText"
-                           Grid.Column="1"
-                           Text="--°C"
-                           Foreground="White"
-                           FontFamily="Segoe UI"
-                           FontSize="16"
-                           FontWeight="Bold"
-                           HorizontalAlignment="Right"
-                           VerticalAlignment="Center" />
-            </Grid>
-        </StackPanel>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" MinWidth="90" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="CPU" Style="{StaticResource LabelText}" />
+            <TextBlock x:Name="CpuTempText" Grid.Row="0" Grid.Column="1" Text="--°C" Style="{StaticResource ValueText}" />
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="GPU" Style="{StaticResource LabelText}" />
+            <TextBlock x:Name="GpuTempText" Grid.Row="1" Grid.Column="1" Text="--°C" Style="{StaticResource ValueText}" />
+
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="RAM" Style="{StaticResource LabelText}" />
+            <TextBlock x:Name="RamText" Grid.Row="2" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
+
+            <TextBlock Grid.Row="3" Grid.Column="0" Text="VRAM" Style="{StaticResource LabelText}" />
+            <TextBlock x:Name="VramText" Grid.Row="3" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
+
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="DISK" Style="{StaticResource LabelText}" />
+            <TextBlock x:Name="DiskText" Grid.Row="4" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
+        </Grid>
     </Border>
 </Window>
