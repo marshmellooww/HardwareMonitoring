@@ -6,12 +6,29 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <UseWPF>true</UseWPF>
+        <UseWindowsForms>true</UseWindowsForms>
         <ApplicationManifest>app.manifest</ApplicationManifest>
+        <ApplicationIcon>Assets\tray.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>
       <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.7-pre726" />
       <PackageReference Include="System.Management" Version="10.0.11" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="Assets\tray.ico">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <!-- UseWindowsForms implicitly adds global usings for System.Drawing and
+           System.Windows.Forms, which collide with WPF's System.Windows types
+           (Application, Brush, ...). We reference the WinForms/Drawing types
+           we need (NotifyIcon, Icon) fully-qualified instead. -->
+      <Using Remove="System.Drawing" />
+      <Using Remove="System.Windows.Forms" />
     </ItemGroup>
 
 </Project>
