@@ -1,5 +1,4 @@
 using System.IO;
-using System.Management;
 using System.Runtime.InteropServices;
 using LibreHardwareMonitor.Hardware;
 
@@ -42,14 +41,15 @@ public sealed class HardwareMonitorService : IDisposable
     {
         _computer.Accept(_visitor);
 
-        // LibreHardwareMonitor needs its kernel driver to read CPU MSR sensors
-        // directly. On machines where that driver is blocked (e.g. corporate
-        // EDR policies), fall back to the ACPI thermal zone exposed via WMI.
+        // Requires LibreHardwareMonitor's kernel driver to read CPU MSR sensors
+        // directly, which Windows blocks when Memory Integrity (Core Isolation)
+        // is on. There's no reliable fallback: MSAcpi_ThermalZoneTemperature via
+        // WMI often reports an unrelated ambient/chassis probe instead of the
+        // CPU die, so a plausible-looking wrong number is worse than N/A here.
         CpuTemperature = FindTemperature(
             new[] { HardwareType.Cpu },
             s => s.Name.Contains("Package", StringComparison.OrdinalIgnoreCase)
-                 || s.Name.Contains("Average", StringComparison.OrdinalIgnoreCase))
-            ?? GetAcpiThermalZoneTemperature();
+                 || s.Name.Contains("Average", StringComparison.OrdinalIgnoreCase));
 
         GpuTemperature = FindTemperature(
             GpuHardwareTypes,
@@ -140,34 +140,6 @@ public sealed class HardwareMonitorService : IDisposable
                 ISensor chosen = sensors.FirstOrDefault(preferred) ?? sensors[0];
                 return chosen.Value;
             }
-        }
-
-        return null;
-    }
-
-    private static float? GetAcpiThermalZoneTemperature()
-    {
-        try
-        {
-            using var searcher = new ManagementObjectSearcher(
-                @"root\WMI",
-                "SELECT CurrentTemperature FROM MSAcpi_ThermalZoneTemperature");
-
-            foreach (ManagementBaseObject obj in searcher.Get())
-            {
-                using (obj)
-                {
-                    // Value is in tenths of a Kelvin.
-                    uint tenthsKelvin = Convert.ToUInt32(obj["CurrentTemperature"]);
-                    float celsius = (tenthsKelvin / 10f) - 273.15f;
-                    if (celsius is > 0 and < 110)
-                        return celsius;
-                }
-            }
-        }
-        catch
-        {
-            // No ACPI thermal zone available on this system.
         }
 
         return null;
