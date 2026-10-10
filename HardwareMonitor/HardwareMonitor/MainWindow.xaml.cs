@@ -35,7 +35,7 @@ public partial class MainWindow : Window
 
         _timer = new DispatcherTimer
         {
-            Interval = TimeSpan.FromSeconds(1.5),
+            Interval = TimeSpan.FromSeconds(1),
         };
         _timer.Tick += (_, _) => UpdateReadings();
         _timer.Start();
