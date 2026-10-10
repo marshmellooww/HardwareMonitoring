@@ -26,6 +26,13 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
+        if (!_hardwareMonitor.IsPawnIoInstalled)
+        {
+            CpuTempText.ToolTip = "CPU temperature needs the PawnIO driver.\n"
+                                  + "Install it from https://pawnio.eu (or run: winget install namazso.PawnIO),\n"
+                                  + "then restart Hardware Monitor.";
+        }
+
         _timer = new DispatcherTimer
         {
             Interval = TimeSpan.FromSeconds(1.5),
@@ -53,18 +60,19 @@ public partial class MainWindow : Window
     private void UpdateReadings()
     {
         _hardwareMonitor.Refresh();
-        SetTemperature(CpuTempText, _hardwareMonitor.CpuTemperature);
+        SetTemperature(CpuTempText, _hardwareMonitor.CpuTemperature,
+            _hardwareMonitor.IsPawnIoInstalled ? "N/A" : "No driver");
         SetTemperature(GpuTempText, _hardwareMonitor.GpuTemperature);
         SetUsage(RamText, _hardwareMonitor.RamUsedGb, _hardwareMonitor.RamTotalGb, "GB");
         SetUsage(VramText, _hardwareMonitor.VramUsedGb, _hardwareMonitor.VramTotalGb, "GB");
         SetDisk(DiskText, _hardwareMonitor.DiskFreeGb, _hardwareMonitor.DiskTotalGb, "GB");
     }
 
-    private static void SetTemperature(TextBlock block, float? value)
+    private static void SetTemperature(TextBlock block, float? value, string unknownText = "N/A")
     {
         if (!value.HasValue)
         {
-            block.Text = "N/A";
+            block.Text = unknownText;
             block.Foreground = UnknownBrush;
             return;
         }

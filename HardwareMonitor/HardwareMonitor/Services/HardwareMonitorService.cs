@@ -1,6 +1,7 @@
 using System.IO;
 using System.Runtime.InteropServices;
 using LibreHardwareMonitor.Hardware;
+using LibreHardwareMonitor.PawnIo;
 
 namespace HardwareMonitor.Services;
 
@@ -27,6 +28,12 @@ public sealed class HardwareMonitorService : IDisposable
     public double? DiskFreeGb { get; private set; }
     public double? DiskTotalGb { get; private set; }
 
+    /// <summary>
+    /// LibreHardwareMonitor reads CPU temperatures through the PawnIO driver,
+    /// so <see cref="CpuTemperature"/> is always null when this is false.
+    /// </summary>
+    public bool IsPawnIoInstalled { get; } = PawnIo.IsInstalled;
+
     public HardwareMonitorService()
     {
         _computer = new Computer
@@ -41,9 +48,8 @@ public sealed class HardwareMonitorService : IDisposable
     {
         _computer.Accept(_visitor);
 
-        // Requires LibreHardwareMonitor's kernel driver to read CPU MSR sensors
-        // directly, which Windows blocks when Memory Integrity (Core Isolation)
-        // is on. There's no reliable fallback: MSAcpi_ThermalZoneTemperature via
+        // Requires the PawnIO driver (see IsPawnIoInstalled) to read CPU MSR
+        // sensors. There's no reliable fallback: MSAcpi_ThermalZoneTemperature via
         // WMI often reports an unrelated ambient/chassis probe instead of the
         // CPU die, so a plausible-looking wrong number is worse than N/A here.
         CpuTemperature = FindTemperature(
