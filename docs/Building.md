@@ -49,13 +49,33 @@ HardwareMonitor/bin/Release/net9.0-windows/HardwareMonitor.exe
 
 > **Close the running app before rebuilding.** Windows locks a running `.exe`, so the build fails to overwrite it.
 
-## Build and run in one step
+## Running it
+
+The app's manifest requires administrator rights, so it has to be started in a way that can show the Windows admin (UAC) prompt.
+
+**Command Prompt:**
+
+```bash
+start "" "HardwareMonitor\bin\Release\net9.0-windows\HardwareMonitor.exe"
+```
+
+**PowerShell:**
+
+```powershell
+Start-Process .\HardwareMonitor\bin\Release\net9.0-windows\HardwareMonitor.exe
+```
+
+Both launch the `.exe` the same way a double-click in File Explorer does, so Windows shows the admin prompt.
+
+### Why `dotnet run` fails from a normal terminal
 
 ```bash
 dotnet run -c Release --project HardwareMonitor
 ```
 
-`--project` points at the app's folder, because the current folder holds the solution rather than the project.
+From a normal terminal this fails with *"An error occurred trying to start process … The requested operation requires elevation"* (in Turkish Windows: *"İstenen işlem için yükseltme gerekiyor"*). `dotnet run` starts the app directly, a way that can't trigger the admin prompt, so Windows refuses. The build itself succeeded; only the launch failed.
+
+It **does** work from a terminal that's already elevated: right-click Windows Terminal or Command Prompt → **Run as administrator**. (`--project` points at the app's folder, because the current folder holds the solution rather than the project.)
 
 ## Publish a copy to share
 

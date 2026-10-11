@@ -43,6 +43,10 @@ It's probably hidden or behind other windows. Left-click the tray icon to show i
 
 The app doesn't yet prevent a second copy from starting. If it's already running from startup and you launch the `.exe` again, you get two. Exit one from its tray icon.
 
+## `dotnet run` says "The requested operation requires elevation"
+
+The build worked, but `dotnet run` can't start an app that requires administrator rights from a normal terminal. Start the built `.exe` with `start` (Command Prompt) or `Start-Process` (PowerShell) instead, or open the terminal as administrator. See [Building → Running it](Building.md#running-it).
+
 ## The build fails with "file is locked" / "being used by another process"
 
 The app is running from the folder you're building into. Exit it (tray icon → **Exit**), then build again.

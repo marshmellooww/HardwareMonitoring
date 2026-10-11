@@ -29,10 +29,24 @@ You need **Windows 10/11 (64-bit)** and the **[.NET 9 SDK](https://dotnet.micros
 ```bash
 git clone https://github.com/marshmellooww/HardwareMonitoring.git
 cd HardwareMonitoring/HardwareMonitor
-dotnet run -c Release --project HardwareMonitor
+dotnet build -c Release
 ```
 
-Windows will ask for administrator permission. That's expected (see [Why admin?](#why-does-it-need-administrator-rights)).
+Then start it. In **Command Prompt**:
+
+```bash
+start "" "HardwareMonitor\bin\Release\net9.0-windows\HardwareMonitor.exe"
+```
+
+In **PowerShell**:
+
+```powershell
+Start-Process .\HardwareMonitor\bin\Release\net9.0-windows\HardwareMonitor.exe
+```
+
+Or just double-click that `.exe` in File Explorer. Windows will ask for administrator permission. That's expected (see [Why admin?](#why-does-it-need-administrator-rights)).
+
+> `dotnet run` only works from a terminal opened **as administrator**. From a normal terminal it fails with *"The requested operation requires elevation"*, because it can't show the admin prompt. See [Building](docs/Building.md#running-it).
 
 ### For CPU temperature: install PawnIO
 
