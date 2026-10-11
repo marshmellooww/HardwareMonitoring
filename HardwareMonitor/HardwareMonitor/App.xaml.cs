@@ -26,6 +26,13 @@ public partial class App : Application
             Visible = true,
             ContextMenuStrip = menu,
         };
+
+        // Brings the widget back to the front when "Always on top" is off.
+        _trayIcon.MouseClick += (_, args) =>
+        {
+            if (args.Button == System.Windows.Forms.MouseButtons.Left)
+                MainWindow?.Activate();
+        };
     }
 
     protected override void OnExit(ExitEventArgs e)

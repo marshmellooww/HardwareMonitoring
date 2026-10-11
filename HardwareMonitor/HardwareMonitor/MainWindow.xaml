@@ -15,6 +15,7 @@
         ResizeMode="NoResize"
         WindowStartupLocation="Manual"
         Loaded="Window_Loaded"
+        SizeChanged="Window_SizeChanged"
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
     <Window.Resources>
         <Style x:Key="LabelText" TargetType="TextBlock">
@@ -23,7 +24,7 @@
             <Setter Property="FontSize" Value="12" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Margin" Value="0,0,10,4" />
+            <Setter Property="Margin" Value="0,0,8,0" />
         </Style>
         <Style x:Key="ValueText" TargetType="TextBlock">
             <Setter Property="Foreground" Value="White" />
@@ -33,44 +34,228 @@
             <Setter Property="HorizontalAlignment" Value="Right" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
+
+        <!-- Dark context menu matching the overlay. -->
+        <SolidColorBrush x:Key="MenuBackgroundBrush" Color="#F2202020" />
+        <SolidColorBrush x:Key="MenuBorderBrush" Color="#33FFFFFF" />
+        <SolidColorBrush x:Key="MenuHoverBrush" Color="#22FFFFFF" />
+        <SolidColorBrush x:Key="MenuTextBrush" Color="#EEEEEE" />
+        <SolidColorBrush x:Key="MenuMutedBrush" Color="#999999" />
+        <SolidColorBrush x:Key="MenuAccentBrush" Color="#6CCB5F" />
+        <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+
+        <Style x:Key="MenuIcon" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource IconFont}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{StaticResource MenuMutedBrush}" />
+        </Style>
+
+        <Style TargetType="ContextMenu">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ContextMenu">
+                        <Border Margin="0,0,8,8"
+                                Padding="4"
+                                Background="{StaticResource MenuBackgroundBrush}"
+                                BorderBrush="{StaticResource MenuBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.45" />
+                            </Border.Effect>
+                            <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="{x:Static MenuItem.SeparatorStyleKey}" TargetType="Separator">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Separator">
+                        <Border Height="1" Margin="8,4" Background="{StaticResource MenuBorderBrush}" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="MenuItem">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Foreground" Value="{StaticResource MenuTextBrush}" />
+            <Setter Property="FontFamily" Value="Segoe UI" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <Grid SnapsToDevicePixels="True">
+                            <Border x:Name="Bd" MinWidth="168" Padding="8,6" Background="Transparent" CornerRadius="4">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="24" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <ContentPresenter x:Name="IconPresenter" ContentSource="Icon" VerticalAlignment="Center" />
+                                    <TextBlock x:Name="CheckMark"
+                                               Text="&#xE73E;"
+                                               FontFamily="{StaticResource IconFont}"
+                                               FontSize="12"
+                                               Foreground="{StaticResource MenuAccentBrush}"
+                                               VerticalAlignment="Center"
+                                               Visibility="Collapsed" />
+                                    <ContentPresenter Grid.Column="1" ContentSource="Header" RecognizesAccessKey="True" VerticalAlignment="Center" />
+                                    <TextBlock x:Name="Arrow"
+                                               Grid.Column="2"
+                                               Margin="16,0,0,0"
+                                               Text="&#xE76C;"
+                                               FontFamily="{StaticResource IconFont}"
+                                               FontSize="10"
+                                               Foreground="{StaticResource MenuMutedBrush}"
+                                               VerticalAlignment="Center"
+                                               Visibility="Collapsed" />
+                                </Grid>
+                            </Border>
+                            <Popup x:Name="PART_Popup"
+                                   Placement="Right"
+                                   HorizontalOffset="2"
+                                   VerticalOffset="-5"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Fade"
+                                   IsOpen="{TemplateBinding IsSubmenuOpen}">
+                                <Border Margin="0,0,8,8"
+                                        Padding="4"
+                                        Background="{StaticResource MenuBackgroundBrush}"
+                                        BorderBrush="{StaticResource MenuBorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="8">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.45" />
+                                    </Border.Effect>
+                                    <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="CheckMark" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="IconPresenter" Property="Visibility" Value="Collapsed" />
+                            </Trigger>
+                            <Trigger Property="Role" Value="SubmenuHeader">
+                                <Setter TargetName="Arrow" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource MenuHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.4" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
-    <Border Background="#CC1A1A1A"
+    <Border x:Name="RootBorder"
+            Background="#CC1A1A1A"
             BorderBrush="#33FFFFFF"
             BorderThickness="1"
             CornerRadius="8"
             Padding="14,10">
+        <Border.LayoutTransform>
+            <ScaleTransform x:Name="ContentScale" ScaleX="1" ScaleY="1" />
+        </Border.LayoutTransform>
         <Border.ContextMenu>
             <ContextMenu>
-                <MenuItem Header="Exit" Click="ExitMenuItem_Click" />
+                <MenuItem Header="Layout">
+                    <MenuItem.Icon>
+                        <TextBlock Text="&#xE8A9;" Style="{StaticResource MenuIcon}" />
+                    </MenuItem.Icon>
+                    <MenuItem x:Name="VerticalLayoutItem" Header="Vertical" Click="LayoutMenuItem_Click" />
+                    <MenuItem x:Name="HorizontalLayoutItem" Header="Horizontal" Click="LayoutMenuItem_Click" />
+                </MenuItem>
+                <MenuItem x:Name="SizeMenu" Header="Size">
+                    <MenuItem.Icon>
+                        <TextBlock Text="&#xE740;" Style="{StaticResource MenuIcon}" />
+                    </MenuItem.Icon>
+                    <MenuItem Header="Small" Tag="0.85" Click="SizeMenuItem_Click" />
+                    <MenuItem Header="Normal" Tag="1" Click="SizeMenuItem_Click" />
+                    <MenuItem Header="Large" Tag="1.25" Click="SizeMenuItem_Click" />
+                </MenuItem>
+                <MenuItem x:Name="OpacityMenu" Header="Opacity">
+                    <MenuItem.Icon>
+                        <TextBlock Text="&#xE790;" Style="{StaticResource MenuIcon}" />
+                    </MenuItem.Icon>
+                    <MenuItem Header="100%" Tag="1" Click="OpacityMenuItem_Click" />
+                    <MenuItem Header="85%" Tag="0.85" Click="OpacityMenuItem_Click" />
+                    <MenuItem Header="70%" Tag="0.7" Click="OpacityMenuItem_Click" />
+                    <MenuItem Header="50%" Tag="0.5" Click="OpacityMenuItem_Click" />
+                </MenuItem>
+                <Separator />
+                <MenuItem x:Name="TopmostItem" Header="Always on top" Click="TopmostMenuItem_Click" />
+                <MenuItem x:Name="LockPositionItem" Header="Lock position" Click="LockPositionMenuItem_Click" />
+                <MenuItem Header="Reset position" Click="ResetPositionMenuItem_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="&#xE72C;" Style="{StaticResource MenuIcon}" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator />
+                <MenuItem Header="Exit" Click="ExitMenuItem_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="&#xE7E8;" Style="{StaticResource MenuIcon}" />
+                    </MenuItem.Icon>
+                </MenuItem>
             </ContextMenu>
         </Border.ContextMenu>
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" MinWidth="90" />
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0" Grid.Column="0" Text="CPU" Style="{StaticResource LabelText}" />
-            <TextBlock x:Name="CpuTempText" Grid.Row="0" Grid.Column="1" Text="--°C" Style="{StaticResource ValueText}" />
-
-            <TextBlock Grid.Row="1" Grid.Column="0" Text="GPU" Style="{StaticResource LabelText}" />
-            <TextBlock x:Name="GpuTempText" Grid.Row="1" Grid.Column="1" Text="--°C" Style="{StaticResource ValueText}" />
-
-            <TextBlock Grid.Row="2" Grid.Column="0" Text="RAM" Style="{StaticResource LabelText}" />
-            <TextBlock x:Name="RamText" Grid.Row="2" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
-
-            <TextBlock Grid.Row="3" Grid.Column="0" Text="VRAM" Style="{StaticResource LabelText}" />
-            <TextBlock x:Name="VramText" Grid.Row="3" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
-
-            <TextBlock Grid.Row="4" Grid.Column="0" Text="DISK" Style="{StaticResource LabelText}" />
-            <TextBlock x:Name="DiskText" Grid.Row="4" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
-        </Grid>
+        <!-- Each stat is a label/value pair. Vertical layout stacks them and
+             shares column widths so values line up; horizontal lays them out
+             in a single row (see ApplyLayout). -->
+        <StackPanel x:Name="StatsPanel" Grid.IsSharedSizeScope="True">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition SharedSizeGroup="Label" />
+                    <ColumnDefinition SharedSizeGroup="Value" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="CPU" Style="{StaticResource LabelText}" />
+                <TextBlock x:Name="CpuTempText" Grid.Column="1" Text="--°C" Style="{StaticResource ValueText}" />
+            </Grid>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition SharedSizeGroup="Label" />
+                    <ColumnDefinition SharedSizeGroup="Value" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="GPU" Style="{StaticResource LabelText}" />
+                <TextBlock x:Name="GpuTempText" Grid.Column="1" Text="--°C" Style="{StaticResource ValueText}" />
+            </Grid>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition SharedSizeGroup="Label" />
+                    <ColumnDefinition SharedSizeGroup="Value" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="RAM" Style="{StaticResource LabelText}" />
+                <TextBlock x:Name="RamText" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
+            </Grid>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition SharedSizeGroup="Label" />
+                    <ColumnDefinition SharedSizeGroup="Value" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="VRAM" Style="{StaticResource LabelText}" />
+                <TextBlock x:Name="VramText" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
+            </Grid>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition SharedSizeGroup="Label" />
+                    <ColumnDefinition SharedSizeGroup="Value" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="DISK" Style="{StaticResource LabelText}" />
+                <TextBlock x:Name="DiskText" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
+            </Grid>
+        </StackPanel>
     </Border>
 </Window>
