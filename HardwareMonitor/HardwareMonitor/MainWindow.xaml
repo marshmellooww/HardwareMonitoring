@@ -247,6 +247,7 @@
                     <MenuItem.Icon>
                         <TextBlock Text="&#xE740;" Style="{StaticResource MenuIcon}" />
                     </MenuItem.Icon>
+                    <MenuItem Header="Extra small" Tag="0.65" Click="SizeMenuItem_Click" />
                     <MenuItem Header="Small" Tag="0.85" Click="SizeMenuItem_Click" />
                     <MenuItem Header="Normal" Tag="1" Click="SizeMenuItem_Click" />
                     <MenuItem Header="Large" Tag="1.25" Click="SizeMenuItem_Click" />
