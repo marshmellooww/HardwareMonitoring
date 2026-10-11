@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -120,6 +121,8 @@ public partial class MainWindow : Window
         CheckItemWithTag(OpacityMenu, _settings.Opacity);
         TopmostItem.IsChecked = _settings.Topmost;
         LockPositionItem.IsChecked = _settings.IsPositionLocked;
+        ClickThroughItem.IsChecked = _settings.IsClickThrough;
+        ApplyClickThrough();
     }
 
     private void ApplyLayout(bool horizontal)
@@ -278,6 +281,50 @@ public partial class MainWindow : Window
 
     private void LockPositionMenuItem_Click(object sender, RoutedEventArgs e) =>
         UpdateSettings(s => s.IsPositionLocked = !s.IsPositionLocked);
+
+    // Once on, the widget can't be clicked anymore, so it's turned off from the tray.
+    private void ClickThroughMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        IsClickThrough = true;
+        ((App)Application.Current).ShowTrayTip(
+            "Click-through is on",
+            "Clicks now go to whatever is behind the widget. Right-click the tray icon to turn it off.");
+    }
+
+    public bool IsClickThrough
+    {
+        get => _settings.IsClickThrough;
+        set => UpdateSettings(s => s.IsClickThrough = value);
+    }
+
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        ApplyClickThrough();
+    }
+
+    private void ApplyClickThrough()
+    {
+        // WPF windows with AllowsTransparency are already layered; adding
+        // WS_EX_TRANSPARENT makes Windows route mouse input to the window below.
+        IntPtr hwnd = new WindowInteropHelper(this).Handle;
+        if (hwnd == IntPtr.Zero)
+            return; // Not created yet; OnSourceInitialized applies it.
+
+        int style = GetWindowLong(hwnd, GwlExStyle);
+        int updated = _settings.IsClickThrough ? style | WsExTransparent : style & ~WsExTransparent;
+        if (updated != style)
+            SetWindowLong(hwnd, GwlExStyle, updated);
+    }
+
+    private const int GwlExStyle = -20;
+    private const int WsExTransparent = 0x20;
+
+    [DllImport("user32.dll")]
+    private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+
+    [DllImport("user32.dll")]
+    private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
 
     private void ResetPositionMenuItem_Click(object sender, RoutedEventArgs e)
     {

@@ -20,9 +20,20 @@ public partial class App : Application
         // again from here, and only "Exit" here actually quits.
         var menu = new System.Windows.Forms.ContextMenuStrip();
         var toggleItem = menu.Items.Add("Hide widget", null, (_, _) => ToggleWidget());
+        var clickThroughItem = new System.Windows.Forms.ToolStripMenuItem("Click-through");
+        clickThroughItem.Click += (_, _) =>
+        {
+            if (MainWindow is MainWindow widget)
+                widget.IsClickThrough = !widget.IsClickThrough;
+        };
+        menu.Items.Add(clickThroughItem);
         menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
         menu.Items.Add("Exit", null, (_, _) => Shutdown());
-        menu.Opening += (_, _) => toggleItem.Text = MainWindow?.IsVisible == true ? "Hide widget" : "Show widget";
+        menu.Opening += (_, _) =>
+        {
+            toggleItem.Text = MainWindow?.IsVisible == true ? "Hide widget" : "Show widget";
+            clickThroughItem.Checked = (MainWindow as MainWindow)?.IsClickThrough == true;
+        };
 
         _trayIcon = new System.Windows.Forms.NotifyIcon
         {
@@ -44,6 +55,9 @@ public partial class App : Application
                 ShowWidget();
         };
     }
+
+    public void ShowTrayTip(string title, string text) =>
+        _trayIcon?.ShowBalloonTip(4000, title, text, System.Windows.Forms.ToolTipIcon.Info);
 
     private void ShowWidget()
     {

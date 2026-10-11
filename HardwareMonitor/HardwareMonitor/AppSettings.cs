@@ -21,6 +21,9 @@ public sealed class AppSettings
     public bool Topmost { get; set; } = true;
     public bool IsPositionLocked { get; set; }
 
+    /// <summary>Mouse clicks pass through the widget to whatever is behind it.</summary>
+    public bool IsClickThrough { get; set; }
+
     /// <summary>Stats turned off in the Sensors menu, by row tag (e.g. "RAM").</summary>
     public List<string> HiddenStats { get; set; } = new();
 
