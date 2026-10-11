@@ -27,6 +27,7 @@ public partial class MainWindow : Window
     private readonly AppSettings _settings = AppSettings.Load();
     private readonly DispatcherTimer _timer = new();
     private readonly List<DiskRow> _diskRows = new();
+    private Task? _refreshTask;
     private bool _isPositioned;
 
     public MainWindow()
@@ -41,9 +42,9 @@ public partial class MainWindow : Window
                                   + "then restart Hardware Monitor.";
         }
 
-        // Interval comes from the Refresh rate setting (see ApplySettings).
-        _timer.Tick += (_, _) => UpdateReadings();
-        _timer.Start();
+        // Interval comes from the Refresh rate setting (see ApplySettings);
+        // started in Window_Loaded after the first reading.
+        _timer.Tick += Timer_Tick;
 
         // Runs schtasks.exe, so keep it off the UI thread.
         bool startWithWindows = _settings.StartWithWindows;
@@ -54,11 +55,14 @@ public partial class MainWindow : Window
     {
         // Populate real readings before anchoring, so the window is sized
         // and positioned for its actual content rather than the "--" placeholders.
-        UpdateReadings();
+        // This first read happens before the window is shown, so blocking is fine here.
+        _hardwareMonitor.Refresh();
+        ShowReadings();
         UpdateLayout();
         if (!RestoreSavedPosition())
             PositionWindow();
         _isPositioned = true;
+        _timer.Start();
     }
 
     private void PositionWindow()
@@ -186,9 +190,21 @@ public partial class MainWindow : Window
         _settings.Save();
     }
 
-    private void UpdateReadings()
+    private async void Timer_Tick(object? sender, EventArgs e)
     {
-        _hardwareMonitor.Refresh();
+        // Reading the sensors takes ~100 ms or more (driver calls, disk queries).
+        // Doing that on the UI thread froze the widget mid-drag on every tick, so
+        // read on a worker thread and only update the text back here.
+        if (_refreshTask is { IsCompleted: false })
+            return; // Previous read still running; skip rather than queue up.
+
+        _refreshTask = Task.Run(_hardwareMonitor.Refresh);
+        await _refreshTask;
+        ShowReadings();
+    }
+
+    private void ShowReadings()
+    {
         SetTemperature(CpuTempText, _hardwareMonitor.CpuTemperature,
             _hardwareMonitor.IsPawnIoInstalled ? "N/A" : "No driver");
         SetTemperature(GpuTempText, _hardwareMonitor.GpuTemperature);
@@ -426,6 +442,7 @@ public partial class MainWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         _timer.Stop();
+        _refreshTask?.Wait(TimeSpan.FromSeconds(3)); // Don't close the sensors mid-read.
         _hardwareMonitor.Dispose();
 
         // Width changes may have shifted a user-placed widget; remember where it ended up.
