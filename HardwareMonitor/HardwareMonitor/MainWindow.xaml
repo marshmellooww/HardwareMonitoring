@@ -271,6 +271,12 @@
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
+                <MenuItem Header="Task Manager" Click="TaskManagerMenuItem_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="&#xE9D9;" Style="{StaticResource MenuIcon}" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator />
                 <!-- Hide and Exit side by side, as buttons in a single menu row. -->
                 <MenuItem Style="{StaticResource MenuButtonRow}">
                     <MenuItem.Header>
