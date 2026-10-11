@@ -204,9 +204,9 @@
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
-                <MenuItem Header="Exit" Click="ExitMenuItem_Click">
+                <MenuItem Header="Hide" Click="HideMenuItem_Click">
                     <MenuItem.Icon>
-                        <TextBlock Text="&#xE7E8;" Style="{StaticResource MenuIcon}" />
+                        <TextBlock Text="&#xED1A;" Style="{StaticResource MenuIcon}" />
                     </MenuItem.Icon>
                 </MenuItem>
             </ContextMenu>

@@ -255,7 +255,8 @@ public partial class MainWindow : Window
         PositionWindow();
     }
 
-    private void ExitMenuItem_Click(object sender, RoutedEventArgs e) => Application.Current.Shutdown();
+    // Only hides: the tray icon keeps running and its menu is where the app exits.
+    private void HideMenuItem_Click(object sender, RoutedEventArgs e) => Hide();
 
     protected override void OnClosed(EventArgs e)
     {
