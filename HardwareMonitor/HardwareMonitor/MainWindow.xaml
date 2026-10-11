@@ -171,6 +171,17 @@
         </Border.LayoutTransform>
         <Border.ContextMenu>
             <ContextMenu>
+                <MenuItem x:Name="SensorsMenu" Header="Sensors">
+                    <MenuItem.Icon>
+                        <TextBlock Text="&#xE950;" Style="{StaticResource MenuIcon}" />
+                    </MenuItem.Icon>
+                    <!-- Tags match the Tag of the stat rows below. -->
+                    <MenuItem Header="CPU" Tag="CPU" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
+                    <MenuItem Header="GPU" Tag="GPU" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
+                    <MenuItem Header="RAM" Tag="RAM" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
+                    <MenuItem Header="VRAM" Tag="VRAM" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
+                    <MenuItem Header="DISK" Tag="DISK" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
+                </MenuItem>
                 <MenuItem Header="Layout">
                     <MenuItem.Icon>
                         <TextBlock Text="&#xE8A9;" Style="{StaticResource MenuIcon}" />
@@ -216,7 +227,7 @@
              shares column widths so values line up; horizontal lays them out
              in a single row (see ApplyLayout). -->
         <StackPanel x:Name="StatsPanel" Grid.IsSharedSizeScope="True">
-            <Grid>
+            <Grid Tag="CPU">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition SharedSizeGroup="Label" />
                     <ColumnDefinition SharedSizeGroup="Value" />
@@ -224,7 +235,7 @@
                 <TextBlock Text="CPU" Style="{StaticResource LabelText}" />
                 <TextBlock x:Name="CpuTempText" Grid.Column="1" Text="--°C" Style="{StaticResource ValueText}" />
             </Grid>
-            <Grid>
+            <Grid Tag="GPU">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition SharedSizeGroup="Label" />
                     <ColumnDefinition SharedSizeGroup="Value" />
@@ -232,7 +243,7 @@
                 <TextBlock Text="GPU" Style="{StaticResource LabelText}" />
                 <TextBlock x:Name="GpuTempText" Grid.Column="1" Text="--°C" Style="{StaticResource ValueText}" />
             </Grid>
-            <Grid>
+            <Grid Tag="RAM">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition SharedSizeGroup="Label" />
                     <ColumnDefinition SharedSizeGroup="Value" />
@@ -240,7 +251,7 @@
                 <TextBlock Text="RAM" Style="{StaticResource LabelText}" />
                 <TextBlock x:Name="RamText" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
             </Grid>
-            <Grid>
+            <Grid Tag="VRAM">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition SharedSizeGroup="Label" />
                     <ColumnDefinition SharedSizeGroup="Value" />
@@ -248,7 +259,7 @@
                 <TextBlock Text="VRAM" Style="{StaticResource LabelText}" />
                 <TextBlock x:Name="VramText" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
             </Grid>
-            <Grid>
+            <Grid Tag="DISK">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition SharedSizeGroup="Label" />
                     <ColumnDefinition SharedSizeGroup="Value" />

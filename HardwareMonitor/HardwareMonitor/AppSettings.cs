@@ -21,6 +21,9 @@ public sealed class AppSettings
     public bool Topmost { get; set; } = true;
     public bool IsPositionLocked { get; set; }
 
+    /// <summary>Stats turned off in the Sensors menu, by row tag (e.g. "RAM").</summary>
+    public List<string> HiddenStats { get; set; } = new();
+
     /// <summary>Last window position; null means "use the default top-right corner".</summary>
     public double? Left { get; set; }
     public double? Top { get; set; }

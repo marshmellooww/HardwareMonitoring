@@ -130,10 +130,34 @@ public partial class MainWindow : Window
         // would just pad every stat out to the widest one.
         Grid.SetIsSharedSizeScope(StatsPanel, !horizontal);
 
+        List<Grid> stats = StatsPanel.Children.OfType<Grid>().ToList();
+
+        // An empty widget can't be right-clicked to bring stats back, so never hide them all.
+        if (stats.All(s => _settings.HiddenStats.Contains((string)s.Tag)))
+            _settings.HiddenStats.Clear();
+
+        foreach (Grid stat in stats)
+        {
+            bool shown = !_settings.HiddenStats.Contains((string)stat.Tag);
+            stat.Visibility = shown ? Visibility.Visible : Visibility.Collapsed;
+
+            // Hidden rows keep their last width in a shared size group, which
+            // would leave the widget as wide as a stat that isn't shown anymore.
+            stat.ColumnDefinitions[0].SharedSizeGroup = shown ? "Label" : null;
+            stat.ColumnDefinitions[1].SharedSizeGroup = shown ? "Value" : null;
+        }
+
+        List<Grid> visible = stats.Where(s => s.Visibility == Visibility.Visible).ToList();
         Thickness spacing = horizontal ? new Thickness(0, 0, 18, 0) : new Thickness(0, 0, 0, 4);
-        UIElementCollection stats = StatsPanel.Children;
-        for (int i = 0; i < stats.Count; i++)
-            ((FrameworkElement)stats[i]).Margin = i < stats.Count - 1 ? spacing : new Thickness(0);
+        for (int i = 0; i < visible.Count; i++)
+            visible[i].Margin = i < visible.Count - 1 ? spacing : new Thickness(0);
+
+        // Check the shown sensors, and lock the last one so it can't be unchecked.
+        foreach (MenuItem item in SensorsMenu.Items.OfType<MenuItem>())
+        {
+            item.IsChecked = !_settings.HiddenStats.Contains((string)item.Tag);
+            item.IsEnabled = !(item.IsChecked && visible.Count == 1);
+        }
     }
 
     private static void CheckItemWithTag(MenuItem menu, double value)
@@ -228,6 +252,16 @@ public partial class MainWindow : Window
         _settings.Left = Left;
         _settings.Top = Top;
         _settings.Save();
+    }
+
+    private void SensorMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        string tag = (string)((MenuItem)sender).Tag;
+        UpdateSettings(s =>
+        {
+            if (!s.HiddenStats.Remove(tag))
+                s.HiddenStats.Add(tag);
+        });
     }
 
     private void LayoutMenuItem_Click(object sender, RoutedEventArgs e) =>
