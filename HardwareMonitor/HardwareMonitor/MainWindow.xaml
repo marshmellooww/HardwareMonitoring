@@ -83,6 +83,50 @@
             </Setter>
         </Style>
 
+        <!-- A menu row that just hosts its Header (used for the Hide/Exit buttons). -->
+        <Style x:Key="MenuButtonRow" TargetType="MenuItem">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <ContentPresenter ContentSource="Header" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="MenuRowButton" TargetType="Button">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Foreground" Value="{StaticResource MenuTextBrush}" />
+            <Setter Property="FontFamily" Value="Segoe UI" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Tag" Value="{StaticResource MenuHoverBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Padding="6,4" Background="Transparent" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Same as MenuRowButton, but hovers red to flag that it quits the app. -->
+        <Style x:Key="MenuRowExitButton" TargetType="Button" BasedOn="{StaticResource MenuRowButton}">
+            <Setter Property="Tag">
+                <Setter.Value>
+                    <SolidColorBrush Color="#40FF5A36" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style TargetType="MenuItem">
             <Setter Property="OverridesDefaultStyle" Value="True" />
             <Setter Property="Foreground" Value="{StaticResource MenuTextBrush}" />
@@ -216,10 +260,24 @@
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
-                <MenuItem Header="Hide" Click="HideMenuItem_Click">
-                    <MenuItem.Icon>
-                        <TextBlock Text="&#xED1A;" Style="{StaticResource MenuIcon}" />
-                    </MenuItem.Icon>
+                <!-- Hide and Exit side by side, as buttons in a single menu row. -->
+                <MenuItem Style="{StaticResource MenuButtonRow}">
+                    <MenuItem.Header>
+                        <UniformGrid Columns="2">
+                            <Button Style="{StaticResource MenuRowButton}" Margin="0,0,2,0" Click="HideMenuItem_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xED1A;" Style="{StaticResource MenuIcon}" VerticalAlignment="Center" />
+                                    <TextBlock Text="Hide" Margin="6,0,0,0" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource MenuRowExitButton}" Margin="2,0,0,0" Click="ExitMenuItem_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE7E8;" Style="{StaticResource MenuIcon}" VerticalAlignment="Center" />
+                                    <TextBlock Text="Exit" Margin="6,0,0,0" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </UniformGrid>
+                    </MenuItem.Header>
                 </MenuItem>
             </ContextMenu>
         </Border.ContextMenu>
