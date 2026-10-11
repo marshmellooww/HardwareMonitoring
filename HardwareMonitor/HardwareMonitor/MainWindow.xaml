@@ -264,6 +264,7 @@
                 <MenuItem x:Name="TopmostItem" Header="Always on top" Click="TopmostMenuItem_Click" />
                 <MenuItem x:Name="LockPositionItem" Header="Lock position" Click="LockPositionMenuItem_Click" />
                 <MenuItem x:Name="ClickThroughItem" Header="Click-through" Click="ClickThroughMenuItem_Click" />
+                <MenuItem x:Name="StartWithWindowsItem" Header="Start with Windows" Click="StartWithWindowsMenuItem_Click" />
                 <MenuItem Header="Reset position" Click="ResetPositionMenuItem_Click">
                     <MenuItem.Icon>
                         <TextBlock Text="&#xE72C;" Style="{StaticResource MenuIcon}" />

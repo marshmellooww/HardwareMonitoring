@@ -42,6 +42,10 @@ public partial class MainWindow : Window
         // Interval comes from the Refresh rate setting (see ApplySettings).
         _timer.Tick += (_, _) => UpdateReadings();
         _timer.Start();
+
+        // Runs schtasks.exe, so keep it off the UI thread.
+        bool startWithWindows = _settings.StartWithWindows;
+        Task.Run(() => StartupTask.Apply(startWithWindows));
     }
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -122,6 +126,7 @@ public partial class MainWindow : Window
         TopmostItem.IsChecked = _settings.Topmost;
         LockPositionItem.IsChecked = _settings.IsPositionLocked;
         ClickThroughItem.IsChecked = _settings.IsClickThrough;
+        StartWithWindowsItem.IsChecked = _settings.StartWithWindows;
         ApplyClickThrough();
     }
 
@@ -284,6 +289,13 @@ public partial class MainWindow : Window
 
     private void LockPositionMenuItem_Click(object sender, RoutedEventArgs e) =>
         UpdateSettings(s => s.IsPositionLocked = !s.IsPositionLocked);
+
+    private void StartWithWindowsMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        UpdateSettings(s => s.StartWithWindows = !s.StartWithWindows);
+        bool startWithWindows = _settings.StartWithWindows;
+        Task.Run(() => StartupTask.Apply(startWithWindows));
+    }
 
     // Once on, the widget can't be clicked anymore, so it's turned off from the tray.
     private void ClickThroughMenuItem_Click(object sender, RoutedEventArgs e)
