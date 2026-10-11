@@ -25,6 +25,7 @@ public partial class MainWindow : Window
     private readonly HardwareMonitorService _hardwareMonitor = new();
     private readonly AppSettings _settings = AppSettings.Load();
     private readonly DispatcherTimer _timer = new();
+    private readonly List<DiskRow> _diskRows = new();
     private bool _isPositioned;
 
     public MainWindow()
@@ -192,8 +193,56 @@ public partial class MainWindow : Window
         SetTemperature(GpuTempText, _hardwareMonitor.GpuTemperature);
         SetUsage(RamText, _hardwareMonitor.RamUsedGb, _hardwareMonitor.RamTotalGb, "GB");
         SetUsage(VramText, _hardwareMonitor.VramUsedGb, _hardwareMonitor.VramTotalGb, "GB");
-        SetDisk(DiskText, _hardwareMonitor.DiskFreeGb, _hardwareMonitor.DiskTotalGb, "GB");
+
+        IReadOnlyList<DiskUsage> disks = _hardwareMonitor.Disks;
+        SyncDiskRows(disks);
+        for (int i = 0; i < disks.Count; i++)
+            SetDisk(_diskRows[i].Value, disks[i].FreeGb, disks[i].TotalGb, "GB");
     }
+
+    /// <summary>
+    /// Keeps one widget row and one Sensors menu entry per drive, rebuilding
+    /// them only when the set of drives changes (e.g. a drive is added).
+    /// </summary>
+    private void SyncDiskRows(IReadOnlyList<DiskUsage> disks)
+    {
+        if (disks.Select(d => d.Letter).SequenceEqual(_diskRows.Select(r => r.Letter)))
+            return;
+
+        foreach (DiskRow old in _diskRows)
+        {
+            StatsPanel.Children.Remove(old.Row);
+            SensorsMenu.Items.Remove(old.MenuItem);
+        }
+        _diskRows.Clear();
+
+        foreach (DiskUsage disk in disks)
+        {
+            string tag = $"DISK {disk.Letter}";
+
+            var row = new Grid { Tag = tag };
+            row.ColumnDefinitions.Add(new ColumnDefinition { SharedSizeGroup = "Label" });
+            row.ColumnDefinitions.Add(new ColumnDefinition { SharedSizeGroup = "Value" });
+            row.Children.Add(new TextBlock { Text = tag, Style = (Style)FindResource("LabelText") });
+            var value = new TextBlock { Text = "--", Style = (Style)FindResource("ValueText") };
+            Grid.SetColumn(value, 1);
+            row.Children.Add(value);
+            if (!string.IsNullOrEmpty(disk.VolumeLabel))
+                row.ToolTip = $"{disk.Letter}: {disk.VolumeLabel}";
+            StatsPanel.Children.Add(row);
+
+            var menuItem = new MenuItem { Header = tag, Tag = tag, StaysOpenOnClick = true };
+            menuItem.Click += SensorMenuItem_Click;
+            SensorsMenu.Items.Add(menuItem);
+
+            _diskRows.Add(new DiskRow(disk.Letter, row, value, menuItem));
+        }
+
+        // Applies visibility, spacing and menu checks to the new rows.
+        ApplyLayout(_settings.IsHorizontal);
+    }
+
+    private sealed record DiskRow(string Letter, Grid Row, TextBlock Value, MenuItem MenuItem);
 
     private static void SetTemperature(TextBlock block, float? value, string unknownText = "N/A")
     {

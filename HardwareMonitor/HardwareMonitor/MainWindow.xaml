@@ -224,7 +224,7 @@
                     <MenuItem Header="GPU" Tag="GPU" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
                     <MenuItem Header="RAM" Tag="RAM" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
                     <MenuItem Header="VRAM" Tag="VRAM" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
-                    <MenuItem Header="DISK" Tag="DISK" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
+                    <!-- Drive entries are appended in code, matching the drive rows. -->
                 </MenuItem>
                 <MenuItem x:Name="RefreshMenu" Header="Refresh rate">
                     <MenuItem.Icon>
@@ -329,14 +329,7 @@
                 <TextBlock Text="VRAM" Style="{StaticResource LabelText}" />
                 <TextBlock x:Name="VramText" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
             </Grid>
-            <Grid Tag="DISK">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition SharedSizeGroup="Label" />
-                    <ColumnDefinition SharedSizeGroup="Value" />
-                </Grid.ColumnDefinitions>
-                <TextBlock Text="DISK" Style="{StaticResource LabelText}" />
-                <TextBlock x:Name="DiskText" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
-            </Grid>
+            <!-- One row per drive (DISK C, DISK D, ...) is added in code; see SyncDiskRows. -->
         </StackPanel>
     </Border>
 </Window>

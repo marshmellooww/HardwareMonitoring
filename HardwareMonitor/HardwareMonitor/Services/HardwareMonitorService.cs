@@ -25,8 +25,7 @@ public sealed class HardwareMonitorService : IDisposable
     public float? RamTotalGb { get; private set; }
     public float? VramUsedGb { get; private set; }
     public float? VramTotalGb { get; private set; }
-    public double? DiskFreeGb { get; private set; }
-    public double? DiskTotalGb { get; private set; }
+    public IReadOnlyList<DiskUsage> Disks { get; private set; } = Array.Empty<DiskUsage>();
 
     /// <summary>
     /// LibreHardwareMonitor reads CPU temperatures through the PawnIO driver,
@@ -64,7 +63,7 @@ public sealed class HardwareMonitorService : IDisposable
 
         UpdateMemory();
         UpdateVram();
-        UpdateDisk();
+        UpdateDisks();
     }
 
     private void UpdateMemory()
@@ -109,25 +108,31 @@ public sealed class HardwareMonitorService : IDisposable
         VramTotalGb = null;
     }
 
-    private void UpdateDisk()
+    private void UpdateDisks()
     {
-        try
+        // Every internal drive with a letter (C:, D:, ...), re-scanned each refresh so
+        // drives that get added or removed show up without restarting.
+        var disks = new List<DiskUsage>();
+        foreach (DriveInfo drive in DriveInfo.GetDrives())
         {
-            var drive = new DriveInfo(Path.GetPathRoot(Environment.SystemDirectory) ?? "C:\\");
-            if (drive.IsReady)
+            try
             {
-                DiskFreeGb = drive.AvailableFreeSpace / 1024d / 1024d / 1024d;
-                DiskTotalGb = drive.TotalSize / 1024d / 1024d / 1024d;
-                return;
+                if (drive.DriveType != DriveType.Fixed || !drive.IsReady)
+                    continue;
+
+                disks.Add(new DiskUsage(
+                    drive.Name.TrimEnd('\\', ':'),
+                    drive.VolumeLabel,
+                    drive.AvailableFreeSpace / 1024d / 1024d / 1024d,
+                    drive.TotalSize / 1024d / 1024d / 1024d));
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // Drive not accessible right now; leave it out until it is.
             }
         }
-        catch (IOException)
-        {
-            // Drive not accessible right now; report unknown below.
-        }
 
-        DiskFreeGb = null;
-        DiskTotalGb = null;
+        Disks = disks.OrderBy(d => d.Letter, StringComparer.OrdinalIgnoreCase).ToList();
     }
 
     private float? FindTemperature(IEnumerable<HardwareType> hardwareTypes, Func<ISensor, bool> preferred)
@@ -171,3 +176,6 @@ public sealed class HardwareMonitorService : IDisposable
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GlobalMemoryStatusEx(ref MEMORYSTATUSEX lpBuffer);
 }
+
+/// <summary>Free and total space of one drive, e.g. Letter "C".</summary>
+public sealed record DiskUsage(string Letter, string VolumeLabel, double FreeGb, double TotalGb);
