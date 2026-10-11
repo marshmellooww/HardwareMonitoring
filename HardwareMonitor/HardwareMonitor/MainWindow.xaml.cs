@@ -24,7 +24,7 @@ public partial class MainWindow : Window
 
     private readonly HardwareMonitorService _hardwareMonitor = new();
     private readonly AppSettings _settings = AppSettings.Load();
-    private readonly DispatcherTimer _timer;
+    private readonly DispatcherTimer _timer = new();
     private bool _isPositioned;
 
     public MainWindow()
@@ -39,10 +39,7 @@ public partial class MainWindow : Window
                                   + "then restart Hardware Monitor.";
         }
 
-        _timer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromSeconds(1),
-        };
+        // Interval comes from the Refresh rate setting (see ApplySettings).
         _timer.Tick += (_, _) => UpdateReadings();
         _timer.Start();
     }
@@ -109,16 +106,19 @@ public partial class MainWindow : Window
     {
         _settings.Scale = Math.Clamp(_settings.Scale, 0.5, 2);
         _settings.Opacity = Math.Clamp(_settings.Opacity, 0.2, 1);
+        _settings.RefreshSeconds = Math.Clamp(_settings.RefreshSeconds, 1, 5);
 
         ApplyLayout(_settings.IsHorizontal);
         ContentScale.ScaleX = ContentScale.ScaleY = _settings.Scale;
         Opacity = _settings.Opacity;
         Topmost = _settings.Topmost;
+        _timer.Interval = TimeSpan.FromSeconds(_settings.RefreshSeconds);
 
         VerticalLayoutItem.IsChecked = !_settings.IsHorizontal;
         HorizontalLayoutItem.IsChecked = _settings.IsHorizontal;
         CheckItemWithTag(SizeMenu, _settings.Scale);
         CheckItemWithTag(OpacityMenu, _settings.Opacity);
+        CheckItemWithTag(RefreshMenu, _settings.RefreshSeconds);
         TopmostItem.IsChecked = _settings.Topmost;
         LockPositionItem.IsChecked = _settings.IsPositionLocked;
         ClickThroughItem.IsChecked = _settings.IsClickThrough;
@@ -272,6 +272,9 @@ public partial class MainWindow : Window
 
     private void SizeMenuItem_Click(object sender, RoutedEventArgs e) =>
         UpdateSettings(s => s.Scale = ParseTag(sender));
+
+    private void RefreshMenuItem_Click(object sender, RoutedEventArgs e) =>
+        UpdateSettings(s => s.RefreshSeconds = (int)ParseTag(sender));
 
     private void OpacityMenuItem_Click(object sender, RoutedEventArgs e) =>
         UpdateSettings(s => s.Opacity = ParseTag(sender));

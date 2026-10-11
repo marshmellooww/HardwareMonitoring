@@ -226,6 +226,16 @@
                     <MenuItem Header="VRAM" Tag="VRAM" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
                     <MenuItem Header="DISK" Tag="DISK" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
                 </MenuItem>
+                <MenuItem x:Name="RefreshMenu" Header="Refresh rate">
+                    <MenuItem.Icon>
+                        <TextBlock Text="&#xE823;" Style="{StaticResource MenuIcon}" />
+                    </MenuItem.Icon>
+                    <MenuItem Header="1 second" Tag="1" Click="RefreshMenuItem_Click" />
+                    <MenuItem Header="2 seconds" Tag="2" Click="RefreshMenuItem_Click" />
+                    <MenuItem Header="3 seconds" Tag="3" Click="RefreshMenuItem_Click" />
+                    <MenuItem Header="4 seconds" Tag="4" Click="RefreshMenuItem_Click" />
+                    <MenuItem Header="5 seconds" Tag="5" Click="RefreshMenuItem_Click" />
+                </MenuItem>
                 <MenuItem Header="Layout">
                     <MenuItem.Icon>
                         <TextBlock Text="&#xE8A9;" Style="{StaticResource MenuIcon}" />

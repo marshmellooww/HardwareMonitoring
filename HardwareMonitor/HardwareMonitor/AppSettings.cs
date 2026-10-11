@@ -24,6 +24,9 @@ public sealed class AppSettings
     /// <summary>Mouse clicks pass through the widget to whatever is behind it.</summary>
     public bool IsClickThrough { get; set; }
 
+    /// <summary>How often sensor readings update, 1-5 seconds.</summary>
+    public int RefreshSeconds { get; set; } = 1;
+
     /// <summary>Stats turned off in the Sensors menu, by row tag (e.g. "RAM").</summary>
     public List<string> HiddenStats { get; set; } = new();
 
