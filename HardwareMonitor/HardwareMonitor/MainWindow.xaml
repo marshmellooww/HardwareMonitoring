@@ -224,11 +224,11 @@
                     <MenuItem Header="CPU LOAD" Tag="CPU LOAD" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
                     <MenuItem Header="GPU" Tag="GPU" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
                     <MenuItem Header="GPU LOAD" Tag="GPU LOAD" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
-                    <MenuItem Header="RAM" Tag="RAM" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
                     <MenuItem Header="VRAM" Tag="VRAM" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
-                    <MenuItem Header="WIFI" Tag="WIFI" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
+                    <MenuItem Header="RAM" Tag="RAM" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
+                    <!-- Drive entries are inserted here in code, matching the drive rows. -->
+                    <MenuItem x:Name="WifiSensorItem" Header="WIFI" Tag="WIFI" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
                     <MenuItem Header="IP" Tag="IP" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
-                    <!-- Drive entries are appended in code, matching the drive rows. -->
                 </MenuItem>
                 <MenuItem x:Name="RefreshMenu" Header="Refresh rate">
                     <MenuItem.Icon>
@@ -340,14 +340,6 @@
                 <TextBlock Text="GPU LOAD" Style="{StaticResource LabelText}" />
                 <TextBlock x:Name="GpuLoadText" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
             </Grid>
-            <Grid Tag="RAM">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition SharedSizeGroup="Label" />
-                    <ColumnDefinition SharedSizeGroup="Value" />
-                </Grid.ColumnDefinitions>
-                <TextBlock Text="RAM" Style="{StaticResource LabelText}" />
-                <TextBlock x:Name="RamText" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
-            </Grid>
             <Grid Tag="VRAM">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition SharedSizeGroup="Label" />
@@ -356,7 +348,16 @@
                 <TextBlock Text="VRAM" Style="{StaticResource LabelText}" />
                 <TextBlock x:Name="VramText" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
             </Grid>
-            <Grid Tag="WIFI">
+            <Grid Tag="RAM">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition SharedSizeGroup="Label" />
+                    <ColumnDefinition SharedSizeGroup="Value" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="RAM" Style="{StaticResource LabelText}" />
+                <TextBlock x:Name="RamText" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
+            </Grid>
+            <!-- Drive rows (DISK C, DISK D, ...) are inserted here in code; see SyncDiskRows. -->
+            <Grid x:Name="WifiRow" Tag="WIFI">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition SharedSizeGroup="Label" />
                     <ColumnDefinition SharedSizeGroup="Value" />
@@ -372,7 +373,6 @@
                 <TextBlock Text="IP" Style="{StaticResource LabelText}" />
                 <TextBlock x:Name="WifiIpText" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
             </Grid>
-            <!-- One row per drive (DISK C, DISK D, ...) is added in code; see SyncDiskRows. -->
         </StackPanel>
     </Border>
 </Window>

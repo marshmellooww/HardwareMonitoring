@@ -251,11 +251,11 @@ public partial class MainWindow : Window
             row.Children.Add(value);
             if (!string.IsNullOrEmpty(disk.VolumeLabel))
                 row.ToolTip = $"{disk.Letter}: {disk.VolumeLabel}";
-            StatsPanel.Children.Add(row);
+            StatsPanel.Children.Insert(StatsPanel.Children.IndexOf(WifiRow), row);
 
             var menuItem = new MenuItem { Header = tag, Tag = tag, StaysOpenOnClick = true };
             menuItem.Click += SensorMenuItem_Click;
-            SensorsMenu.Items.Add(menuItem);
+            SensorsMenu.Items.Insert(SensorsMenu.Items.IndexOf(WifiSensorItem), menuItem);
 
             _diskRows.Add(new DiskRow(disk.Letter, row, value, menuItem));
         }
