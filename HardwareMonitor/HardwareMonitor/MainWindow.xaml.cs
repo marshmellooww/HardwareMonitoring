@@ -27,12 +27,15 @@ public partial class MainWindow : Window
     private readonly AppSettings _settings = AppSettings.Load();
     private readonly DispatcherTimer _timer = new();
     private readonly List<DiskRow> _diskRows = new();
+    private readonly StackPanel[] _groups;
+    private StackPanel? _draggedGroup;
     private Task? _refreshTask;
     private bool _isPositioned;
 
     public MainWindow()
     {
         InitializeComponent();
+        _groups = new[] { CpuGroup, GpuGroup, RamGroup, DiskGroup, NetworkGroup }; // default order
         ApplySettings();
 
         if (!_hardwareMonitor.IsPawnIoInstalled)
@@ -136,15 +139,51 @@ public partial class MainWindow : Window
         ApplyClickThrough();
     }
 
+    /// <summary>The groups in the user's saved order; unknown names are ignored and new groups go last.</summary>
+    private List<StackPanel> OrderedGroups()
+    {
+        var ordered = new List<StackPanel>();
+        foreach (string key in _settings.GroupOrder)
+        {
+            StackPanel? group = _groups.FirstOrDefault(g => (string)g.Tag == key);
+            if (group != null && !ordered.Contains(group))
+                ordered.Add(group);
+        }
+
+        ordered.AddRange(_groups.Where(g => !ordered.Contains(g)));
+        return ordered;
+    }
+
+    /// <summary>A thin line that fades out at both ends, set between two groups.</summary>
+    private static Border CreateSeparator(bool horizontal)
+    {
+        var fade = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0),
+            EndPoint = horizontal ? new Point(0, 1) : new Point(1, 0),
+            GradientStops =
+            {
+                new GradientStop(Color.FromArgb(0x00, 0xFF, 0xFF, 0xFF), 0),
+                new GradientStop(Color.FromArgb(0x55, 0xFF, 0xFF, 0xFF), 0.5),
+                new GradientStop(Color.FromArgb(0x00, 0xFF, 0xFF, 0xFF), 1),
+            },
+        };
+
+        return horizontal
+            ? new Border { Width = 1, Margin = new Thickness(10, 0, 10, 0), Background = fade }
+            : new Border { Height = 1, Margin = new Thickness(0, 6, 0, 6), Background = fade };
+    }
+
     private void ApplyLayout(bool horizontal)
     {
-        StatsPanel.Orientation = horizontal ? Orientation.Horizontal : Orientation.Vertical;
+        Orientation orientation = horizontal ? Orientation.Horizontal : Orientation.Vertical;
+        StatsPanel.Orientation = orientation;
 
         // Shared column widths line values up in a column; in a single row they
         // would just pad every stat out to the widest one.
         Grid.SetIsSharedSizeScope(StatsPanel, !horizontal);
 
-        List<Grid> stats = StatsPanel.Children.OfType<Grid>().ToList();
+        List<Grid> stats = _groups.SelectMany(g => g.Children.OfType<Grid>()).ToList();
 
         // An empty widget can't be right-clicked to bring stats back, so never hide them all.
         if (stats.All(s => _settings.HiddenStats.Contains((string)s.Tag)))
@@ -163,8 +202,25 @@ public partial class MainWindow : Window
 
         List<Grid> visible = stats.Where(s => s.Visibility == Visibility.Visible).ToList();
         Thickness spacing = horizontal ? new Thickness(0, 0, 18, 0) : new Thickness(0, 0, 0, 4);
-        for (int i = 0; i < visible.Count; i++)
-            visible[i].Margin = i < visible.Count - 1 ? spacing : new Thickness(0);
+        foreach (StackPanel group in _groups)
+        {
+            group.Orientation = orientation;
+            List<Grid> rows = group.Children.OfType<Grid>().Where(s => s.Visibility == Visibility.Visible).ToList();
+            for (int i = 0; i < rows.Count; i++)
+                rows[i].Margin = i < rows.Count - 1 ? spacing : new Thickness(0);
+        }
+
+        // Lay the groups out in the saved order, with a separator between neighbours.
+        StatsPanel.Children.Clear();
+        foreach (StackPanel group in OrderedGroups())
+        {
+            if (!group.Children.OfType<Grid>().Any(s => s.Visibility == Visibility.Visible))
+                continue;
+
+            if (StatsPanel.Children.Count > 0)
+                StatsPanel.Children.Add(CreateSeparator(horizontal));
+            StatsPanel.Children.Add(group);
+        }
 
         // Check the shown sensors, and lock the last one so it can't be unchecked.
         foreach (MenuItem item in SensorsMenu.Items.OfType<MenuItem>())
@@ -233,7 +289,7 @@ public partial class MainWindow : Window
 
         foreach (DiskRow old in _diskRows)
         {
-            StatsPanel.Children.Remove(old.Row);
+            DiskGroup.Children.Remove(old.Row);
             SensorsMenu.Items.Remove(old.MenuItem);
         }
         _diskRows.Clear();
@@ -251,7 +307,7 @@ public partial class MainWindow : Window
             row.Children.Add(value);
             if (!string.IsNullOrEmpty(disk.VolumeLabel))
                 row.ToolTip = $"{disk.Letter}: {disk.VolumeLabel}";
-            StatsPanel.Children.Insert(StatsPanel.Children.IndexOf(WifiRow), row);
+            DiskGroup.Children.Add(row);
 
             var menuItem = new MenuItem { Header = tag, Tag = tag, StaysOpenOnClick = true };
             menuItem.Click += SensorMenuItem_Click;
@@ -348,7 +404,14 @@ public partial class MainWindow : Window
 
     private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (e.ButtonState != MouseButtonState.Pressed || _settings.IsPositionLocked)
+        if (e.ButtonState != MouseButtonState.Pressed)
+            return;
+
+        // Ctrl+drag reorders the groups; a plain drag moves the whole widget.
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control) && BeginGroupDrag(e.GetPosition(StatsPanel)))
+            return;
+
+        if (_settings.IsPositionLocked)
             return;
 
         DragMove();
@@ -356,6 +419,76 @@ public partial class MainWindow : Window
         _settings.Top = Top;
         _settings.Save();
     }
+
+    private double Along(Point point) => _settings.IsHorizontal ? point.X : point.Y;
+
+    private double CenterOf(StackPanel group) =>
+        Along(group.TransformToAncestor(StatsPanel).Transform(new Point(group.ActualWidth / 2, group.ActualHeight / 2)));
+
+    private bool BeginGroupDrag(Point pointer)
+    {
+        // Pick the group nearest the pointer (not only the one under it), so the
+        // gaps and separators between groups can be grabbed too.
+        StackPanel? nearest = StatsPanel.Children.OfType<StackPanel>()
+            .OrderBy(g =>
+            {
+                double start = Along(g.TransformToAncestor(StatsPanel).Transform(new Point(0, 0)));
+                double end = start + (_settings.IsHorizontal ? g.ActualWidth : g.ActualHeight);
+                double axis = Along(pointer);
+                return axis < start ? start - axis : axis > end ? axis - end : 0;
+            })
+            .FirstOrDefault();
+        if (nearest == null)
+            return false;
+
+        _draggedGroup = nearest;
+        nearest.Opacity = 0.6;
+        Cursor = Cursors.SizeAll;
+        RootBorder.CaptureMouse();
+        return true;
+    }
+
+    private void Window_MouseMove(object sender, MouseEventArgs e)
+    {
+        if (_draggedGroup == null)
+            return;
+
+        // The group moves past a neighbour once the pointer crosses that neighbour's centre.
+        List<StackPanel> order = OrderedGroups();
+        List<StackPanel> visibleOthers = order
+            .Where(g => g != _draggedGroup && StatsPanel.Children.Contains(g))
+            .ToList();
+        double pointer = Along(e.GetPosition(StatsPanel));
+        int target = visibleOthers.Count(g => CenterOf(g) < pointer);
+
+        int current = order.Where(g => g == _draggedGroup || visibleOthers.Contains(g)).ToList().IndexOf(_draggedGroup);
+        if (target == current)
+            return;
+
+        order.Remove(_draggedGroup);
+        int index = target < visibleOthers.Count
+            ? order.IndexOf(visibleOthers[target])
+            : order.IndexOf(visibleOthers[^1]) + 1;
+        order.Insert(index, _draggedGroup);
+
+        _settings.GroupOrder = order.Select(g => (string)g.Tag).ToList();
+        ApplyLayout(_settings.IsHorizontal);
+    }
+
+    private void Window_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (_draggedGroup == null)
+            return;
+
+        _draggedGroup.Opacity = 1;
+        _draggedGroup = null;
+        ClearValue(CursorProperty);
+        RootBorder.ReleaseMouseCapture();
+        _settings.Save();
+    }
+
+    private void ResetGroupOrderMenuItem_Click(object sender, RoutedEventArgs e) =>
+        UpdateSettings(s => s.GroupOrder.Clear());
 
     private void SensorMenuItem_Click(object sender, RoutedEventArgs e)
     {

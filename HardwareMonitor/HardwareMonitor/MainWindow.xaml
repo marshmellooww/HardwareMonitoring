@@ -16,7 +16,9 @@
         WindowStartupLocation="Manual"
         Loaded="Window_Loaded"
         SizeChanged="Window_SizeChanged"
-        MouseLeftButtonDown="Window_MouseLeftButtonDown">
+        MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        MouseMove="Window_MouseMove"
+        MouseLeftButtonUp="Window_MouseLeftButtonUp">
     <Window.Resources>
         <Style x:Key="LabelText" TargetType="TextBlock">
             <Setter Property="Foreground" Value="#AAAAAA" />
@@ -275,6 +277,7 @@
                         <TextBlock Text="&#xE72C;" Style="{StaticResource MenuIcon}" />
                     </MenuItem.Icon>
                 </MenuItem>
+                <MenuItem Header="Reset group order" Click="ResetGroupOrderMenuItem_Click" />
                 <Separator />
                 <MenuItem Header="Task Manager" Click="TaskManagerMenuItem_Click">
                     <MenuItem.Icon>
@@ -308,6 +311,9 @@
              shares column widths so values line up; horizontal lays them out
              in a single row (see ApplyLayout). -->
         <StackPanel x:Name="StatsPanel" Grid.IsSharedSizeScope="True">
+          <!-- Rows are grouped (CPU, GPU, ...). The groups are what the user reorders by
+               dragging, and ApplyLayout puts a faded separator between them. -->
+          <StackPanel x:Name="CpuGroup" Tag="CPU">
             <Grid Tag="CPU">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition SharedSizeGroup="Label" />
@@ -324,6 +330,8 @@
                 <TextBlock Text="CPU LOAD" Style="{StaticResource LabelText}" />
                 <TextBlock x:Name="CpuLoadText" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
             </Grid>
+          </StackPanel>
+          <StackPanel x:Name="GpuGroup" Tag="GPU">
             <Grid Tag="GPU">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition SharedSizeGroup="Label" />
@@ -348,6 +356,8 @@
                 <TextBlock Text="VRAM" Style="{StaticResource LabelText}" />
                 <TextBlock x:Name="VramText" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
             </Grid>
+          </StackPanel>
+          <StackPanel x:Name="RamGroup" Tag="RAM">
             <Grid Tag="RAM">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition SharedSizeGroup="Label" />
@@ -356,8 +366,11 @@
                 <TextBlock Text="RAM" Style="{StaticResource LabelText}" />
                 <TextBlock x:Name="RamText" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
             </Grid>
-            <!-- Drive rows (DISK C, DISK D, ...) are inserted here in code; see SyncDiskRows. -->
-            <Grid x:Name="WifiRow" Tag="WIFI">
+          </StackPanel>
+          <!-- One row per drive (DISK C, DISK D, ...) is added in code; see SyncDiskRows. -->
+          <StackPanel x:Name="DiskGroup" Tag="DISK" />
+          <StackPanel x:Name="NetworkGroup" Tag="NETWORK">
+            <Grid Tag="WIFI">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition SharedSizeGroup="Label" />
                     <ColumnDefinition SharedSizeGroup="Value" />
@@ -373,6 +386,7 @@
                 <TextBlock Text="IP" Style="{StaticResource LabelText}" />
                 <TextBlock x:Name="WifiIpText" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
             </Grid>
+          </StackPanel>
         </StackPanel>
     </Border>
 </Window>
