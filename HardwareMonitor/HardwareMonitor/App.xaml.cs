@@ -1,6 +1,7 @@
 ﻿using System.Configuration;
 using System.Data;
 using System.IO;
+using System.Threading;
 using System.Windows;
 
 namespace HardwareMonitor;
@@ -12,8 +13,44 @@ public partial class App : Application
 {
     private System.Windows.Forms.NotifyIcon? _trayIcon;
 
+    private const string MutexName = @"Local\HardwareMonitor.SingleInstance";
+    private const string ShowEventName = @"Local\HardwareMonitor.ShowWidget";
+
+    private Mutex? _singleInstanceMutex;
+    private EventWaitHandle? _showEvent;
+
     protected override void OnStartup(StartupEventArgs e)
     {
+        // Only one widget per user session: a second launch asks the running one to
+        // show itself, then exits before creating any window.
+        _singleInstanceMutex = new Mutex(true, MutexName, out bool isFirstInstance);
+        _showEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ShowEventName);
+        if (!isFirstInstance)
+        {
+            _showEvent.Set();
+            _showEvent.Dispose();
+            _showEvent = null;
+            _singleInstanceMutex.Dispose();
+            _singleInstanceMutex = null;
+            Shutdown();
+            return;
+        }
+
+        var showEvent = _showEvent;
+        new Thread(() =>
+        {
+            try
+            {
+                while (showEvent.WaitOne())
+                    Dispatcher.BeginInvoke(ShowWidget);
+            }
+            catch (ObjectDisposedException)
+            {
+                // App is exiting.
+            }
+        })
+        { IsBackground = true }.Start();
+
         base.OnStartup(e);
 
         // The tray icon is the app's lifetime: the widget can be hidden and shown
@@ -76,6 +113,8 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _trayIcon?.Dispose();
+        _showEvent?.Dispose();
+        _singleInstanceMutex?.Dispose();
         base.OnExit(e);
     }
 }
