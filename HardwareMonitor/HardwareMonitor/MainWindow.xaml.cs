@@ -209,6 +209,7 @@ public partial class MainWindow : Window
             _hardwareMonitor.IsPawnIoInstalled ? "N/A" : "No driver");
         SetLoad(CpuLoadText, _hardwareMonitor.CpuLoad);
         SetTemperature(GpuTempText, _hardwareMonitor.GpuTemperature);
+        SetLoad(GpuLoadText, _hardwareMonitor.GpuLoad);
         SetUsage(RamText, _hardwareMonitor.RamUsedGb, _hardwareMonitor.RamTotalGb, "GB");
         SetUsage(VramText, _hardwareMonitor.VramUsedGb, _hardwareMonitor.VramTotalGb, "GB");
 

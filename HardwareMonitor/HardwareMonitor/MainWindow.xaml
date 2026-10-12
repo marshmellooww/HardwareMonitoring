@@ -223,6 +223,7 @@
                     <MenuItem Header="CPU" Tag="CPU" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
                     <MenuItem Header="CPU LOAD" Tag="CPU LOAD" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
                     <MenuItem Header="GPU" Tag="GPU" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
+                    <MenuItem Header="GPU LOAD" Tag="GPU LOAD" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
                     <MenuItem Header="RAM" Tag="RAM" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
                     <MenuItem Header="VRAM" Tag="VRAM" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
                     <!-- Drive entries are appended in code, matching the drive rows. -->
@@ -328,6 +329,14 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="GPU" Style="{StaticResource LabelText}" />
                 <TextBlock x:Name="GpuTempText" Grid.Column="1" Text="--°C" Style="{StaticResource ValueText}" />
+            </Grid>
+            <Grid Tag="GPU LOAD">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition SharedSizeGroup="Label" />
+                    <ColumnDefinition SharedSizeGroup="Value" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="GPU LOAD" Style="{StaticResource LabelText}" />
+                <TextBlock x:Name="GpuLoadText" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
             </Grid>
             <Grid Tag="RAM">
                 <Grid.ColumnDefinitions>

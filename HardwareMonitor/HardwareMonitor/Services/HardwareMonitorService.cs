@@ -24,6 +24,9 @@ public sealed class HardwareMonitorService : IDisposable
 
     /// <summary>Total CPU utilization, 0-100.</summary>
     public float? CpuLoad { get; private set; }
+
+    /// <summary>GPU core utilization, 0-100.</summary>
+    public float? GpuLoad { get; private set; }
     public float? RamUsedGb { get; private set; }
     public float? RamTotalGb { get; private set; }
     public float? VramUsedGb { get; private set; }
@@ -69,9 +72,27 @@ public sealed class HardwareMonitorService : IDisposable
             s => s.Name.Contains("Core", StringComparison.OrdinalIgnoreCase)
                  || s.Name.Contains("Hot Spot", StringComparison.OrdinalIgnoreCase));
 
+        GpuLoad = FindGpuCoreLoad();
+
         UpdateMemory();
         UpdateVram();
         UpdateDisks();
+    }
+
+    private float? FindGpuCoreLoad()
+    {
+        foreach (HardwareType type in GpuHardwareTypes)
+        {
+            foreach (IHardware gpu in _computer.Hardware.Where(h => h.HardwareType == type))
+            {
+                float? load = gpu.Sensors
+                    .FirstOrDefault(s => s.SensorType == SensorType.Load && s.Name == "GPU Core")?.Value;
+                if (load.HasValue)
+                    return load;
+            }
+        }
+
+        return null;
     }
 
     private void UpdateMemory()
