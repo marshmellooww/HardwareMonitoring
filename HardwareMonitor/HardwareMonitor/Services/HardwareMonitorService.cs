@@ -21,6 +21,9 @@ public sealed class HardwareMonitorService : IDisposable
 
     public float? CpuTemperature { get; private set; }
     public float? GpuTemperature { get; private set; }
+
+    /// <summary>Total CPU utilization, 0-100.</summary>
+    public float? CpuLoad { get; private set; }
     public float? RamUsedGb { get; private set; }
     public float? RamTotalGb { get; private set; }
     public float? VramUsedGb { get; private set; }
@@ -55,6 +58,11 @@ public sealed class HardwareMonitorService : IDisposable
             new[] { HardwareType.Cpu },
             s => s.Name.Contains("Package", StringComparison.OrdinalIgnoreCase)
                  || s.Name.Contains("Average", StringComparison.OrdinalIgnoreCase));
+
+        // Unlike the temperature, this doesn't need the PawnIO driver.
+        CpuLoad = _computer.Hardware
+            .FirstOrDefault(h => h.HardwareType == HardwareType.Cpu)?.Sensors
+            .FirstOrDefault(s => s.SensorType == SensorType.Load && s.Name == "CPU Total")?.Value;
 
         GpuTemperature = FindTemperature(
             GpuHardwareTypes,

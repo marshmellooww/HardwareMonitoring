@@ -207,6 +207,7 @@ public partial class MainWindow : Window
     {
         SetTemperature(CpuTempText, _hardwareMonitor.CpuTemperature,
             _hardwareMonitor.IsPawnIoInstalled ? "N/A" : "No driver");
+        SetLoad(CpuLoadText, _hardwareMonitor.CpuLoad);
         SetTemperature(GpuTempText, _hardwareMonitor.GpuTemperature);
         SetUsage(RamText, _hardwareMonitor.RamUsedGb, _hardwareMonitor.RamTotalGb, "GB");
         SetUsage(VramText, _hardwareMonitor.VramUsedGb, _hardwareMonitor.VramTotalGb, "GB");
@@ -275,6 +276,24 @@ public partial class MainWindow : Window
         {
             <= 60 => NormalBrush,
             <= 80 => WarmBrush,
+            _ => HotBrush,
+        };
+    }
+
+    private static void SetLoad(TextBlock block, float? percent)
+    {
+        if (!percent.HasValue)
+        {
+            block.Text = "N/A";
+            block.Foreground = UnknownBrush;
+            return;
+        }
+
+        block.Text = $"%{percent.Value:0}";
+        block.Foreground = percent.Value switch
+        {
+            <= 60 => NormalBrush,
+            <= 85 => WarmBrush,
             _ => HotBrush,
         };
     }
