@@ -213,6 +213,9 @@ public partial class MainWindow : Window
         SetUsage(RamText, _hardwareMonitor.RamUsedGb, _hardwareMonitor.RamTotalGb, "GB");
         SetUsage(VramText, _hardwareMonitor.VramUsedGb, _hardwareMonitor.VramTotalGb, "GB");
 
+        SetText(WifiNameText, _hardwareMonitor.WifiName);
+        SetText(WifiIpText, _hardwareMonitor.WifiIp);
+
         IReadOnlyList<DiskUsage> disks = _hardwareMonitor.Disks;
         SyncDiskRows(disks);
         for (int i = 0; i < disks.Count; i++)
@@ -279,6 +282,12 @@ public partial class MainWindow : Window
             <= 80 => WarmBrush,
             _ => HotBrush,
         };
+    }
+
+    private static void SetText(TextBlock block, string? text)
+    {
+        block.Text = text ?? "N/A";
+        block.Foreground = text == null ? UnknownBrush : Brushes.White;
     }
 
     private static void SetLoad(TextBlock block, float? percent)

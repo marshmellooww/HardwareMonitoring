@@ -226,6 +226,8 @@
                     <MenuItem Header="GPU LOAD" Tag="GPU LOAD" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
                     <MenuItem Header="RAM" Tag="RAM" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
                     <MenuItem Header="VRAM" Tag="VRAM" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
+                    <MenuItem Header="WIFI" Tag="WIFI" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
+                    <MenuItem Header="IP" Tag="IP" StaysOpenOnClick="True" Click="SensorMenuItem_Click" />
                     <!-- Drive entries are appended in code, matching the drive rows. -->
                 </MenuItem>
                 <MenuItem x:Name="RefreshMenu" Header="Refresh rate">
@@ -353,6 +355,22 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="VRAM" Style="{StaticResource LabelText}" />
                 <TextBlock x:Name="VramText" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
+            </Grid>
+            <Grid Tag="WIFI">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition SharedSizeGroup="Label" />
+                    <ColumnDefinition SharedSizeGroup="Value" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="WIFI" Style="{StaticResource LabelText}" />
+                <TextBlock x:Name="WifiNameText" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
+            </Grid>
+            <Grid Tag="IP">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition SharedSizeGroup="Label" />
+                    <ColumnDefinition SharedSizeGroup="Value" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="IP" Style="{StaticResource LabelText}" />
+                <TextBlock x:Name="WifiIpText" Grid.Column="1" Text="--" Style="{StaticResource ValueText}" />
             </Grid>
             <!-- One row per drive (DISK C, DISK D, ...) is added in code; see SyncDiskRows. -->
         </StackPanel>

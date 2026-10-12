@@ -1,5 +1,10 @@
+using System.Diagnostics;
+using System.Globalization;
 using System.IO;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Text;
 using LibreHardwareMonitor.Hardware;
 using LibreHardwareMonitor.PawnIo;
 
@@ -32,6 +37,16 @@ public sealed class HardwareMonitorService : IDisposable
     public float? VramUsedGb { get; private set; }
     public float? VramTotalGb { get; private set; }
     public IReadOnlyList<DiskUsage> Disks { get; private set; } = Array.Empty<DiskUsage>();
+
+    /// <summary>Name (SSID) of the connected Wi-Fi network; null when not connected.</summary>
+    public string? WifiName { get; private set; }
+
+    /// <summary>IPv4 address of the Wi-Fi adapter; null when not connected.</summary>
+    public string? WifiIp { get; private set; }
+
+    // Starting a netsh process is slow, and the network rarely changes, so it's polled less often.
+    private static readonly TimeSpan NetworkInterval = TimeSpan.FromSeconds(5);
+    private long _lastNetworkTicks = long.MinValue;
 
     /// <summary>
     /// LibreHardwareMonitor reads CPU temperatures through the PawnIO driver,
@@ -77,6 +92,81 @@ public sealed class HardwareMonitorService : IDisposable
         UpdateMemory();
         UpdateVram();
         UpdateDisks();
+        UpdateNetwork();
+    }
+
+    private void UpdateNetwork()
+    {
+        long now = Environment.TickCount64;
+        if (_lastNetworkTicks != long.MinValue && now - _lastNetworkTicks < NetworkInterval.TotalMilliseconds)
+            return;
+        _lastNetworkTicks = now;
+
+        string? ip = null;
+        try
+        {
+            NetworkInterface? wifi = NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(
+                n => n.NetworkInterfaceType == NetworkInterfaceType.Wireless80211
+                     && n.OperationalStatus == OperationalStatus.Up
+                     && n.GetIPProperties().UnicastAddresses.Any(a => a.Address.AddressFamily == AddressFamily.InterNetwork));
+
+            ip = wifi?.GetIPProperties().UnicastAddresses
+                .First(a => a.Address.AddressFamily == AddressFamily.InterNetwork).Address.ToString();
+        }
+        catch (NetworkInformationException)
+        {
+            // Adapter list unavailable right now; show nothing until the next poll.
+        }
+
+        WifiIp = ip;
+        WifiName = ip == null ? null : ReadWifiName();
+    }
+
+    /// <summary>
+    /// Reads the SSID from <c>netsh wlan show interfaces</c>. Only the "SSID" key is matched
+    /// (it isn't translated), so this doesn't depend on the Windows display language.
+    /// On recent Windows 11 builds it returns nothing unless Location access is allowed.
+    /// </summary>
+    private static string? ReadWifiName()
+    {
+        try
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            var startInfo = new ProcessStartInfo("netsh", "wlan show interfaces")
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                StandardOutputEncoding = Encoding.GetEncoding(CultureInfo.CurrentCulture.TextInfo.OEMCodePage),
+            };
+
+            using Process? process = Process.Start(startInfo);
+            if (process == null)
+                return null;
+
+            string output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit(2000);
+
+            foreach (string rawLine in output.Split('\n'))
+            {
+                string line = rawLine.Trim();
+                if (!line.StartsWith("SSID", StringComparison.Ordinal))
+                    continue;
+
+                int colon = line.IndexOf(':');
+                if (colon > 0 && line[..colon].Trim() == "SSID")
+                {
+                    string name = line[(colon + 1)..].Trim();
+                    return name.Length > 0 ? name : null;
+                }
+            }
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or IOException or ArgumentException)
+        {
+            // netsh missing or blocked; the name just shows as unavailable.
+        }
+
+        return null;
     }
 
     private float? FindGpuCoreLoad()
