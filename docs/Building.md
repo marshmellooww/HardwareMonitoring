@@ -107,3 +107,4 @@ Open `HardwareMonitor/HardwareMonitor.sln` in Visual Studio 2022 (17.12+) or Jet
 
 - **"Start with Windows" follows the last `.exe` you ran.** If you switch between Debug and Release builds, the most recently launched one is what opens at sign-in.
 - **Clean build:** `dotnet clean` removes the build output if something seems stale.
+- **Getting updates:** see [Updating](Updating.md).

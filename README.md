@@ -58,6 +58,18 @@ winget install namazso.PawnIO
 
 Or download it from [pawnio.eu](https://pawnio.eu). Restart Hardware Monitor afterwards.
 
+### Updating to the latest version
+
+Exit the app (tray icon → **Exit**), then from the repo folder:
+
+```bash
+git pull
+cd HardwareMonitor
+dotnet build -c Release
+```
+
+Start it again the same way as above. Your settings are kept. See **[docs/Updating.md](docs/Updating.md)** for details and fixes for common update problems.
+
 ## Using it
 
 | Action | How |
@@ -76,6 +88,7 @@ See **[docs/Usage.md](docs/Usage.md)** for every menu option and the settings fi
 | Page | What's in it |
 |---|---|
 | [Building](docs/Building.md) | Prerequisites, building and running from the command line, publishing a shareable copy |
+| [Updating](docs/Updating.md) | Getting the latest version and rebuilding, what carries over, fixing update problems |
 | [Usage](docs/Usage.md) | Every menu option, color thresholds, the settings file |
 | [How it works](docs/How-It-Works.md) | Architecture, how sensors are read, settings, startup task, click-through |
 | [Troubleshooting](docs/Troubleshooting.md) | "No driver", missing widget in games, startup issues, resetting settings |
